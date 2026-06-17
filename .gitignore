@@ -17,3 +17,6 @@ env/
 # OS / editor
 .DS_Store
 .vscode/
+
+Files
+check_db.py
