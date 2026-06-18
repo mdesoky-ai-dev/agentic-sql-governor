@@ -1,7 +1,10 @@
 # Agentic SQL Governor
 
-**API:** `https://your-real-render-url.onrender.com`
-**Docs:** `https://your-real-render-url.onrender.com/docs`
+## Live Demo
+
+**Frontend:** https://agentic-sql-governor.netlify.app  
+**Back-end API:** `https://your-real-render-url.onrender.com`
+**API Docs:** `https://your-real-render-url.onrender.com/docs`
 
 **Security-first Text-to-SQL Engine**  
 Ask a financial database questions in plain English — while a multi-layer security governor ensures the AI can only ever *look*, never *touch*.
