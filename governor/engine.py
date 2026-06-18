@@ -104,9 +104,7 @@ async def add_current_time(ctx: RunContext[GovernorDeps]) -> str:
 # ---------------------------------------------------------------------------
 
 @governor_agent.tool
-async def validate_and_dry_run_query(
-    ctx: RunContext[GovernorDeps], sql_query: str
-) -> str:
+async def validate_and_dry_run_query(ctx: RunContext[GovernorDeps], sql_query: str) -> str:
     """Validate and dry-run a candidate SQL query.
 
     Runs the four-gate AST firewall, then asks Postgres to EXPLAIN the query.
@@ -136,9 +134,7 @@ async def validate_and_dry_run_query(
 # ---------------------------------------------------------------------------
 
 @governor_agent.output_validator
-async def re_validate_final_query(
-    ctx: RunContext[GovernorDeps], output: SQLGovernorResponse
-) -> SQLGovernorResponse:
+async def re_validate_final_query(ctx: RunContext[GovernorDeps], output: SQLGovernorResponse) -> SQLGovernorResponse:
     """Re-run the firewall on the committed query — the second independent veto.
 
     The model cannot skip the tool and fabricate a SuccessResponse.
