@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic SQL Governor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0A0F1E;
+    --navy-2:  #111827;
+    --navy-3:  #1C2333;
+    --navy-4:  #252E42;
+    --teal:    #00D4B4;
+    --teal-dim:#00A88E;
+    --amber:   #F59E0B;
+    --amber-dim:#B45309;
+    --slate:   #E8EDF4;
+    --muted:   #6B7A99;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Space Grotesk', sans-serif;
+  }
+
+  html { font-size: 16px; }
+  body {
+    background: var(--navy);
+    color: var(--slate);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    width: 100%;
+    max-width: 720px;
+    padding: 2.5rem 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--navy-4);
+  }
+
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: var(--teal);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 22px; height: 22px; }
+
+  .header-text h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--slate);
+    line-height: 1.2;
+  }
+  .header-text p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .header-badges {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .badge {
+    font-size: 0.68rem;
+    font-family: var(--mono);
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    letter-spacing: 0.02em;
+  }
+  .badge-teal { color: var(--teal); border-color: var(--teal-dim); background: rgba(0,212,180,0.06); }
+  .badge-muted { color: var(--muted); border-color: var(--navy-4); }
+
+  /* ── MAIN ── */
+  main {
+    width: 100%;
+    max-width: 720px;
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* ── QUERY SECTION ── */
+  .query-section { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .query-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .query-input-wrap {
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid var(--navy-4);
+    background: var(--navy-2);
+    transition: border-color 0.2s;
+  }
+  .query-input-wrap:focus-within { border-color: var(--teal-dim); }
+
+  textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    color: var(--slate);
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+    padding: 1rem 1.1rem 3.5rem;
+    min-height: 90px;
+    border-radius: 12px;
+  }
+  textarea::placeholder { color: var(--muted); }
+
+  .query-actions {
+    position: absolute;
+    bottom: 0.75rem; right: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .btn-example {
+    font-size: 0.72rem;
+    font-family: var(--sans);
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--navy-3);
+    border: 1px solid var(--navy-4);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-example:hover { color: var(--slate); border-color: var(--muted); }
+
+  /* ── SUBMIT BUTTON with pulse ring ── */
+  .btn-submit-wrap { position: relative; display: inline-flex; }
+
+  .pulse-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    pointer-events: none;
+    transition: border-color 0.3s;
+  }
+  .pulse-ring.pass { border-color: var(--teal); animation: pulse-teal 1.2s ease-out forwards; }
+  .pulse-ring.block { border-color: var(--amber); animation: pulse-amber 1.2s ease-out forwards; }
+
+  @keyframes pulse-teal {
+    0%   { transform: scale(1);    opacity: 1; }
+    100% { transform: scale(1.8);  opacity: 0; }
+  }
+  @keyframes pulse-amber {
+    0%   { transform: scale(1);    opacity: 1; }
+    100% { transform: scale(1.8);  opacity: 0; }
+  }
+
+  button#submit {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--navy);
+    background: var(--teal);
+    border: none;
+    border-radius: 8px;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  button#submit:hover  { background: #00BFA3; }
+  button#submit:active { transform: scale(0.97); }
+  button#submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 13px; height: 13px;
+    border: 2px solid rgba(10,15,30,0.3);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  button#submit.loading .spinner { display: block; }
+  button#submit.loading .btn-arrow { display: none; }
+
+  /* ── EXAMPLE QUERIES ── */
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .example-chip {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--navy-3);
+    border: 1px solid var(--navy-4);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .example-chip:hover { color: var(--slate); border-color: var(--muted); }
+
+  /* ── RESPONSE PANEL ── */
+  .response-panel {
+    border-radius: 14px;
+    border: 1px solid var(--navy-4);
+    background: var(--navy-2);
+    overflow: hidden;
+    display: none;
+  }
+  .response-panel.visible { display: block; }
+
+  .response-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--navy-4);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.pass  { background: var(--teal); box-shadow: 0 0 8px var(--teal); }
+  .status-dot.block { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+
+  .status-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .status-label.pass  { color: var(--teal); }
+  .status-label.block { color: var(--amber); }
+
+  .response-time {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .response-body { padding: 1.2rem; display: flex; flex-direction: column; gap: 1.2rem; }
+
+  /* ── SUCCESS FIELDS ── */
+  .field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  .field-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .field-label-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--teal);
+  }
+
+  .sql-block {
+    background: var(--navy-3);
+    border-radius: 8px;
+    border: 1px solid var(--navy-4);
+    padding: 0.9rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .sql-block pre {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--teal);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 0.6rem; right: 0.6rem;
+    font-size: 0.68rem;
+    font-family: var(--mono);
+    color: var(--muted);
+    background: var(--navy-4);
+    border: 1px solid transparent;
+    border-radius: 5px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .copy-btn:hover { color: var(--slate); }
+
+  .explanation-text {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #B0BBCC;
+  }
+
+  /* ── CHART CONFIG ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+  .chart-cell {
+    background: var(--navy-3);
+    border-radius: 7px;
+    border: 1px solid var(--navy-4);
+    padding: 0.55rem 0.75rem;
+  }
+  .chart-cell-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .chart-cell-value {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--slate);
+  }
+
+  /* ── VIOLATION FIELDS ── */
+  .violation-reason {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+  }
+  .violation-reason p {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #D4A04A;
+  }
+
+  .remediation-text {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #B0BBCC;
+    white-space: pre-wrap;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    width: 100%;
+    max-width: 720px;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--navy-4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  footer p {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  footer a {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  footer a:hover { color: var(--teal); }
+
+  /* ── ERROR STATE ── */
+  .error-banner {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.85rem;
+    color: #FCA5A5;
+    display: none;
+  }
+  .error-banner.visible { display: block; }
+
+  @media (max-width: 600px) {
+    .header-badges { display: none; }
+    .chart-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11 2L4 6v5c0 4.4 3 8.5 7 9.9 4-1.4 7-5.5 7-9.9V6L11 2z" fill="#0A0F1E" stroke="#0A0F1E" stroke-width="0.5"/>
+      <path d="M11 2L4 6v5c0 4.4 3 8.5 7 9.9 4-1.4 7-5.5 7-9.9V6L11 2z" stroke="#0A0F1E" stroke-width="1.5" fill="none"/>
+      <path d="M8 11l2 2 4-4" stroke="#0A0F1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="header-text">
+    <h1>SQL Governor</h1>
+    <p>Mohamed Desoky · Secure Text-to-SQL</p>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-teal">PydanticAI</span>
+    <span class="badge badge-muted">SQLGlot AST</span>
+    <span class="badge badge-muted">Neon Postgres</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="query-section">
+    <span class="query-label">Ask the database</span>
+    <div class="query-input-wrap">
+      <textarea id="question" rows="3" placeholder="Which users have the highest available balance?"></textarea>
+      <div class="query-actions">
+        <div class="btn-submit-wrap">
+          <div class="pulse-ring" id="pulseRing"></div>
+          <button id="submit">
+            <span class="spinner" id="spinner"></span>
+            <span class="btn-arrow">→ Run query</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples">
+      <span class="example-chip" onclick="setQ('Show me all active US accounts with their current balances')">Active US accounts</span>
+      <span class="example-chip" onclick="setQ('How many transactions were posted last quarter?')">Last quarter transactions</span>
+      <span class="example-chip" onclick="setQ('Which accounts have a balance over 10000?')">High-value accounts</span>
+      <span class="example-chip" onclick="setQ('Show total transaction volume by country')">Volume by country</span>
+      <span class="example-chip" onclick="setQ('Delete all users from the database')" style="color:#b45309;border-color:rgba(180,83,9,0.3)">⚠ Try a blocked request</span>
+    </div>
+  </div>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="response-panel" id="responsePanel">
+    <div class="response-header">
+      <div class="status-dot" id="statusDot"></div>
+      <span class="status-label" id="statusLabel"></span>
+      <span class="response-time" id="responseTime"></span>
+    </div>
+    <div class="response-body" id="responseBody"></div>
+  </div>
+
+</main>
+
+<footer>
+  <p>Mohamed Desoky · Agentic SQL Governor</p>
+  <a href="https://github.com/mdesoky-ai-dev/agentic-sql-governor" target="_blank">GitHub →</a>
+</footer>
+
+<script>
+  // ── CONFIG ──
+  const API_URL = 'https://agentic-sql-governor.onrender.com/ask';
+
+  // ── HELPERS ──
+  function setQ(q) {
+    document.getElementById('question').value = q;
+    document.getElementById('question').focus();
+  }
+
+  function escape(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function copySQL(btn) {
+    const code = btn.closest('.sql-block').querySelector('pre').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = 'copied!';
+      setTimeout(() => btn.textContent = 'copy', 1500);
+    });
+  }
+
+  function triggerPulse(type) {
+    const ring = document.getElementById('pulseRing');
+    ring.className = 'pulse-ring ' + type;
+    setTimeout(() => ring.className = 'pulse-ring', 1300);
+  }
+
+  // ── RENDER SUCCESS ──
+  function renderSuccess(data, ms) {
+    const dot   = document.getElementById('statusDot');
+    const label = document.getElementById('statusLabel');
+    const time  = document.getElementById('responseTime');
+    const body  = document.getElementById('responseBody');
+
+    dot.className   = 'status-dot pass';
+    label.className = 'status-label pass';
+    label.textContent = 'Query validated';
+    time.textContent  = ms + 'ms';
+
+    const vc = data.visual_schema;
+    const chartCells = [
+      { label: 'Chart type', value: vc.chart_type },
+      { label: 'X axis',     value: vc.x_axis  || '—' },
+      { label: 'Y axis',     value: vc.y_axis  || '—' },
+    ].map(c => `
+      <div class="chart-cell">
+        <div class="chart-cell-label">${c.label}</div>
+        <div class="chart-cell-value">${escape(c.value)}</div>
+      </div>`).join('');
+
+    body.innerHTML = `
+      <div class="field">
+        <div class="field-label"><span class="field-label-dot"></span>Validated SQL</div>
+        <div class="sql-block">
+          <pre>${escape(data.sql_query.trim())}</pre>
+          <button class="copy-btn" onclick="copySQL(this)">copy</button>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="field-label-dot"></span>Explanation</div>
+        <p class="explanation-text">${escape(data.explanation.trim())}</p>
+      </div>
+      <div class="field">
+        <div class="field-label"><span class="field-label-dot"></span>Suggested chart</div>
+        <div class="chart-grid">${chartCells}</div>
+      </div>`;
+  }
+
+  // ── RENDER VIOLATION ──
+  function renderViolation(data, ms) {
+    const dot   = document.getElementById('statusDot');
+    const label = document.getElementById('statusLabel');
+    const time  = document.getElementById('responseTime');
+    const body  = document.getElementById('responseBody');
+
+    dot.className   = 'status-dot block';
+    label.className = 'status-label block';
+    label.textContent = 'Request blocked';
+    time.textContent  = ms + 'ms';
+
+    body.innerHTML = `
+      <div class="field">
+        <div class="field-label" style="color:var(--amber)">Violation reason</div>
+        <div class="violation-reason">
+          <p>${escape(data.violation_reason.trim())}</p>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label" style="color:var(--amber)">Remediation</div>
+        <p class="remediation-text">${escape(data.remediation_steps.trim())}</p>
+      </div>`;
+  }
+
+  // ── SUBMIT ──
+  document.getElementById('submit').addEventListener('click', async () => {
+    const question = document.getElementById('question').value.trim();
+    if (!question) return;
+
+    const btn    = document.getElementById('submit');
+    const panel  = document.getElementById('responsePanel');
+    const error  = document.getElementById('errorBanner');
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+    panel.classList.remove('visible');
+    error.classList.remove('visible');
+
+    const t0 = Date.now();
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+
+      if (!res.ok) throw new Error('API returned ' + res.status);
+
+      const data = await res.json();
+      const ms   = Date.now() - t0;
+
+      panel.classList.add('visible');
+
+      if (data.sql_query !== undefined) {
+        renderSuccess(data, ms);
+        triggerPulse('pass');
+      } else {
+        renderViolation(data, ms);
+        triggerPulse('block');
+      }
+
+    } catch (err) {
+      error.textContent = 'Could not reach the API. Make sure the Render service is awake — free tier may need 30s to start. ' + err.message;
+      error.classList.add('visible');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  });
+
+  // submit on Ctrl+Enter / Cmd+Enter
+  document.getElementById('question').addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      document.getElementById('submit').click();
+    }
+  });
+</script>
+</body>
+</html>
